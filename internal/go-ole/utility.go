@@ -83,7 +83,7 @@ func lpOleStrLen(p *uint16) (length int64) {
 	ptr := unsafe.Pointer(p)
 
 	for i := 0; ; i++ {
-		if 0 == *(*uint16)(ptr) {
+		if *(*uint16)(ptr) == 0 {
 			length = int64(i)
 			break
 		}
