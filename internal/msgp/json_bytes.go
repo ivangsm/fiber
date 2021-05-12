@@ -60,7 +60,7 @@ func UnmarshalAsJSON(w io.Writer, msg []byte) ([]byte, error) {
 	return msg, err
 }
 
-func writeNext(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func writeNext(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	if len(msg) < 1 {
 		return msg, scratch, ErrShortBytes
 	}
@@ -80,7 +80,7 @@ func writeNext(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
 	return unfuns[t](w, msg, scratch)
 }
 
-func rwArrayBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwArrayBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	sz, msg, err := ReadArrayHeaderBytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -105,7 +105,7 @@ func rwArrayBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error
 	return msg, scratch, err
 }
 
-func rwMapBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwMapBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	sz, msg, err := ReadMapHeaderBytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -138,7 +138,7 @@ func rwMapBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) 
 	return msg, scratch, err
 }
 
-func rwMapKeyBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwMapKeyBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	msg, scratch, err := rwStringBytes(w, msg, scratch)
 	if err != nil {
 		if tperr, ok := err.(TypeError); ok && tperr.Encoded == BinType {
@@ -148,7 +148,7 @@ func rwMapKeyBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, erro
 	return msg, scratch, err
 }
 
-func rwStringBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwStringBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	str, msg, err := ReadStringZC(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -157,7 +157,7 @@ func rwStringBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, erro
 	return msg, scratch, err
 }
 
-func rwBytesBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwBytesBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	bts, msg, err := ReadBytesZC(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -181,7 +181,7 @@ func rwBytesBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error
 	return msg, scratch, err
 }
 
-func rwNullBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwNullBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	msg, err := ReadNilBytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -190,7 +190,7 @@ func rwNullBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error)
 	return msg, scratch, err
 }
 
-func rwBoolBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwBoolBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	b, msg, err := ReadBoolBytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -203,7 +203,7 @@ func rwBoolBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error)
 	return msg, scratch, err
 }
 
-func rwIntBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwIntBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	i, msg, err := ReadInt64Bytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -213,7 +213,7 @@ func rwIntBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) 
 	return msg, scratch, err
 }
 
-func rwUintBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwUintBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	u, msg, err := ReadUint64Bytes(msg)
 	if err != nil {
 		return msg, scratch, err
@@ -244,7 +244,7 @@ func rwFloatBytes(w jsWriter, msg []byte, f64 bool, scratch []byte) ([]byte, []b
 	return msg, scratch, err
 }
 
-func rwFloat32Bytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwFloat32Bytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	var f float32
 	var err error
 	f, msg, err = ReadFloat32Bytes(msg)
@@ -256,7 +256,7 @@ func rwFloat32Bytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, err
 	return msg, scratch, err
 }
 
-func rwFloat64Bytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwFloat64Bytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	var f float64
 	var err error
 	f, msg, err = ReadFloat64Bytes(msg)
@@ -268,7 +268,7 @@ func rwFloat64Bytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, err
 	return msg, scratch, err
 }
 
-func rwTimeBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwTimeBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	var t time.Time
 	var err error
 	t, msg, err = ReadTimeBytes(msg)
@@ -283,7 +283,7 @@ func rwTimeBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error)
 	return msg, scratch, err
 }
 
-func rwExtensionBytes(w jsWriter, msg []byte, scratch []byte) ([]byte, []byte, error) {
+func rwExtensionBytes(w jsWriter, msg, scratch []byte) ([]byte, []byte, error) {
 	var err error
 	var et int8
 	et, err = peekExtension(msg)

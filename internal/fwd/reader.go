@@ -381,14 +381,14 @@ func (r *Reader) WriteTo(w io.Writer) (int64, error) {
 	return i, nil
 }
 
-func min(a int, b int) int {
+func min(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a int, b int) int {
+func max(a, b int) int {
 	if a < b {
 		return b
 	}

@@ -20,7 +20,7 @@ func Locate(key string, raw []byte) []byte {
 // of the contents of 'val'. It may use up to the full capacity of 'raw.'
 // Replace returns 'nil' if the field doesn't exist or if the object in 'raw'
 // is not a map.
-func Replace(key string, raw []byte, val []byte) []byte {
+func Replace(key string, raw, val []byte) []byte {
 	start, end := locate(raw, key)
 	if start == end {
 		return nil
@@ -31,7 +31,7 @@ func Replace(key string, raw []byte, val []byte) []byte {
 // CopyReplace works similarly to Replace except that the returned
 // byte slice does not point to the same memory as 'raw'. CopyReplace
 // returns 'nil' if the field doesn't exist or 'raw' isn't a map.
-func CopyReplace(key string, raw []byte, val []byte) []byte {
+func CopyReplace(key string, raw, val []byte) []byte {
 	start, end := locate(raw, key)
 	if start == end {
 		return nil
@@ -70,7 +70,7 @@ func HasKey(key string, raw []byte) bool {
 	return false
 }
 
-func replace(raw []byte, start int, end int, val []byte, inplace bool) []byte {
+func replace(raw []byte, start, end int, val []byte, inplace bool) []byte {
 	ll := end - start // length of segment to replace
 	lv := len(val)
 
@@ -112,7 +112,7 @@ func replace(raw []byte, start int, end int, val []byte, inplace bool) []byte {
 
 // locate does a naive O(n) search for the map key; returns start, end
 // (returns 0,0 on error)
-func locate(raw []byte, key string) (start int, end int) {
+func locate(raw []byte, key string) (start, end int) {
 	var (
 		sz    uint32
 		bts   []byte
@@ -150,7 +150,7 @@ func locate(raw []byte, key string) (start int, end int) {
 }
 
 // locate key AND value
-func locateKV(raw []byte, key string) (start int, end int) {
+func locateKV(raw []byte, key string) (start, end int) {
 	var (
 		sz    uint32
 		bts   []byte

@@ -909,7 +909,7 @@ func (e encoder) encodeTextMarshaler(b []byte, p unsafe.Pointer, t reflect.Type,
 	return e.encodeString(b, unsafe.Pointer(&s))
 }
 
-func appendCompactEscapeHTML(dst []byte, src []byte) []byte {
+func appendCompactEscapeHTML(dst, src []byte) []byte {
 	start := 0
 	escape := false
 	inString := false
