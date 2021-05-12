@@ -695,11 +695,11 @@ func ReadByteBytes(b []byte) (byte, []byte, error) {
 // Possible errors:
 // - ErrShortBytes (too few bytes)
 // - TypeError{} (not a 'bin' object)
-func ReadBytesBytes(b []byte, scratch []byte) (v []byte, o []byte, err error) {
+func ReadBytesBytes(b, scratch []byte) (v, o []byte, err error) {
 	return readBytesBytes(b, scratch, false)
 }
 
-func readBytesBytes(b []byte, scratch []byte, zc bool) (v []byte, o []byte, err error) {
+func readBytesBytes(b, scratch []byte, zc bool) (v, o []byte, err error) {
 	l := len(b)
 	if l < 1 {
 		return nil, nil, ErrShortBytes
@@ -766,11 +766,11 @@ func readBytesBytes(b []byte, scratch []byte, zc bool) (v []byte, o []byte, err 
 // Possible errors:
 // - ErrShortBytes (b not long enough)
 // - TypeError{} (object not 'bin')
-func ReadBytesZC(b []byte) (v []byte, o []byte, err error) {
+func ReadBytesZC(b []byte) (v, o []byte, err error) {
 	return readBytesBytes(b, nil, true)
 }
 
-func ReadExactBytes(b []byte, into []byte) (o []byte, err error) {
+func ReadExactBytes(b, into []byte) (o []byte, err error) {
 	l := len(b)
 	if l < 1 {
 		err = ErrShortBytes
@@ -826,7 +826,7 @@ func ReadExactBytes(b []byte, into []byte) (o []byte, err error) {
 // Possible errors:
 // - ErrShortBytes (b not long enough)
 // - TypeError{} (object not 'str')
-func ReadStringZC(b []byte) (v []byte, o []byte, err error) {
+func ReadStringZC(b []byte) (v, o []byte, err error) {
 	l := len(b)
 	if l < 1 {
 		return nil, nil, ErrShortBytes
@@ -901,7 +901,7 @@ func ReadStringBytes(b []byte) (string, []byte, error) {
 // - ErrShortBytes (b not long enough)
 // - TypeError{} (not 'str' type)
 // - InvalidPrefixError (unknown type marker)
-func ReadStringAsBytes(b []byte, scratch []byte) (v []byte, o []byte, err error) {
+func ReadStringAsBytes(b, scratch []byte) (v, o []byte, err error) {
 	var tmp []byte
 	tmp, o, err = ReadStringZC(b)
 	v = append(scratch[:0], tmp...)

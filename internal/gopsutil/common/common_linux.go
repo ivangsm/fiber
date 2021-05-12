@@ -234,7 +234,7 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	return system, role, nil
 }
 
-func GetOSRelease() (platform string, version string, err error) {
+func GetOSRelease() (platform, version string, err error) {
 	contents, err := ReadLines(HostEtc("os-release"))
 	if err != nil {
 		return "", "", nil // return empty

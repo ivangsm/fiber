@@ -245,7 +245,7 @@ func (a *Agent) SetBytesV(k string, v []byte) *Agent {
 // SetBytesKV sets the given 'key: value' header.
 //
 // Use AddBytesKV for setting multiple header values under the same key.
-func (a *Agent) SetBytesKV(k []byte, v []byte) *Agent {
+func (a *Agent) SetBytesKV(k, v []byte) *Agent {
 	a.req.Header.SetBytesKV(k, v)
 
 	return a
@@ -285,7 +285,7 @@ func (a *Agent) AddBytesV(k string, v []byte) *Agent {
 //
 // Multiple headers with the same key may be added with this function.
 // Use SetBytesKV for setting a single header for the given key.
-func (a *Agent) AddBytesKV(k []byte, v []byte) *Agent {
+func (a *Agent) AddBytesKV(k, v []byte) *Agent {
 	a.req.Header.AddBytesKV(k, v)
 
 	return a

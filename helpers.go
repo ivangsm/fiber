@@ -264,7 +264,7 @@ func getOffer(header string, offers ...string) string {
 	return ""
 }
 
-func matchEtag(s string, etag string) bool {
+func matchEtag(s, etag string) bool {
 	if s == etag || s == "W/"+etag || "W/"+s == etag {
 		return true
 	}
