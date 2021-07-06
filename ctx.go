@@ -6,6 +6,7 @@ package fiber
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -32,6 +33,7 @@ const maxParams = 30
 
 const queryTag = "query"
 
+
 // Ctx represents the Context which hold the HTTP request and response.
 // It has methods for the request query string, parameters, body, HTTP headers and so on.
 type Ctx struct {
@@ -51,6 +53,7 @@ type Ctx struct {
 	values              [maxParams]string    // Route parameter values
 	fasthttp            *fasthttp.RequestCtx // Reference to *fasthttp.RequestCtx
 	matched             bool                 // Non use route matched
+	userContext         context.Context
 }
 
 // Range data for c.Range
@@ -237,12 +240,38 @@ func (c *Ctx) BaseURL() string {
 // Returned value is only valid within the handler. Do not store any references.
 // Make copies or use the Immutable setting instead.
 func (c *Ctx) Body() []byte {
-	return c.fasthttp.Request.Body()
+	var err error
+	var encoding string
+	var body []byte
+	// faster than peek
+	c.Request().Header.VisitAll(func(key, value []byte) {
+		if utils.UnsafeString(key) == HeaderContentEncoding {
+			encoding = utils.UnsafeString(value)
+		}
+	})
+
+	switch encoding {
+	case StrGzip:
+		body, err = c.fasthttp.Request.BodyGunzip()
+	case StrBr, StrBrotli:
+		body, err = c.fasthttp.Request.BodyUnbrotli()
+	case StrDeflate:
+		body, err = c.fasthttp.Request.BodyInflate()
+	default:
+		body = c.fasthttp.Request.Body()
+	}
+
+	if err != nil {
+		return []byte(err.Error())
+	}
+
+	return body
 }
 
 // decoderPool helps to improve BodyParser's and QueryParser's performance
 var decoderPool = &sync.Pool{New: func() interface{} {
 	var decoder = schema.NewDecoder()
+	decoder.ZeroEmpty(true)
 	decoder.IgnoreUnknownKeys(true)
 	return decoder
 }}
@@ -306,6 +335,20 @@ func (c *Ctx) ClearCookie(key ...string) {
 // a cancellation signal, and other values across API boundaries.
 func (c *Ctx) Context() *fasthttp.RequestCtx {
 	return c.fasthttp
+}
+
+// UserContext returns a context implementation that was set by
+// user earlier or returns a non-nil, empty context,if it was not set earlier.
+func (c *Ctx) UserContext() context.Context {
+	if c.userContext == nil {
+		c.userContext = context.Background()
+	}
+	return c.userContext
+}
+
+// SetUserContext sets a context implementation by user.
+func (c *Ctx) SetUserContext(ctx context.Context) {
+	c.userContext = ctx
 }
 
 // Cookie sets a cookie by passing a cookie struct.
@@ -483,18 +526,26 @@ func (c *Ctx) Get(key string, defaultValue ...string) string {
 	return defaultString(c.app.getString(c.fasthttp.Request.Header.Peek(key)), defaultValue)
 }
 
-// Hostname contains the hostname derived from the Host HTTP header.
+// Hostname contains the hostname derived from the X-Forwarded-Host or Host HTTP header.
 // Returned value is only valid within the handler. Do not store any references.
 // Make copies or use the Immutable setting instead.
+// Please use Config.EnableTrustedProxyCheck to prevent header spoofing, in case when your app is behind the proxy.
 func (c *Ctx) Hostname() string {
+	if c.IsProxyTrusted() {
+		if host := c.Get(HeaderXForwardedHost); len(host) > 0 {
+			return host
+		}
+	}
 	return c.app.getString(c.fasthttp.Request.URI().Host())
 }
 
 // IP returns the remote IP address of the request.
+// Please use Config.EnableTrustedProxyCheck to prevent header spoofing, in case when your app is behind the proxy.
 func (c *Ctx) IP() string {
-	if len(c.app.config.ProxyHeader) > 0 {
+	if c.IsProxyTrusted() && len(c.app.config.ProxyHeader) > 0 {
 		return c.Get(c.app.config.ProxyHeader)
 	}
+
 	return c.fasthttp.RemoteIP().String()
 }
 
@@ -696,11 +747,15 @@ func (c *Ctx) Path(override ...string) string {
 }
 
 // Protocol contains the request protocol string: http or https for TLS requests.
+// Use Config.EnableTrustedProxyCheck to prevent header spoofing, in case when your app is behind the proxy.
 func (c *Ctx) Protocol() string {
 	if c.fasthttp.IsTLS() {
 		return "https"
 	}
 	scheme := "http"
+	if !c.IsProxyTrusted() {
+		return scheme
+	}
 	c.fasthttp.Request.Header.VisitAll(func(key, val []byte) {
 		if len(key) < 12 {
 			return // X-Forwarded-
@@ -871,6 +926,12 @@ func (c *Ctx) Render(name string, bind interface{}, layouts ...string) error {
 	defer bytebufferpool.Put(buf)
 
 	if c.app.config.Views != nil {
+		// Render template based on global layout if exists
+		if len(layouts) == 0 && c.app.config.ViewsLayout != "" {
+			layouts = []string{
+				c.app.config.ViewsLayout,
+			}
+		}
 		// Render template from Views
 		if err := c.app.config.Views.Render(buf, name, bind, layouts...); err != nil {
 			return err
@@ -1145,4 +1206,13 @@ func (c *Ctx) configDependentPaths() {
 	if len(c.detectionPath) >= 3 {
 		c.treePath = c.detectionPath[:3]
 	}
+}
+
+func (c *Ctx) IsProxyTrusted() bool {
+	if !c.app.config.EnableTrustedProxyCheck {
+		return true
+	}
+
+	_, trustProxy := c.app.config.trustedProxiesMap[c.fasthttp.RemoteIP().String()]
+	return trustProxy
 }
